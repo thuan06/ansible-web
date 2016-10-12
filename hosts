@@ -1,0 +1,8 @@
+[lab]
+#Test
+192.168.10.144
+192.168.10.145
+192.168.10.143
+#Real
+43.239.220.247 ansible_ssh_user=thuandd ansible_ssh_port=1102 ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_sudo_pass='xxxxxx'
+43.239.221.147 ansible_ssh_user=thuandd ansible_ssh_port=1102 ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_sudo_pass='yyyyyy'

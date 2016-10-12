@@ -1,0 +1,44 @@
+---
+- hosts: 192.168.10.144 #43.239.220.247 #LoadBalancer
+  vars: 
+    hostname: thuansanji.appota.com
+  remote_user: root #thuandd
+  become: true
+  tasks:
+    - name: update {{hostname}} to list at /etc/haproxy/game_pages.txt
+      lineinfile: dest=/etc/haproxy/game_pages.txt insertafter=EOF line="{{hostname}}"
+
+#    - name: reload haproxy service 
+#      service: name=haproxy state=reloaded
+    # become: true
+
+- hosts: 192.168.10.145 #43.239.221.147 #Nginx config
+  vars:
+    hostname: thuansanji.appota.com
+    dev_user: thuyld
+    nginx_dir: /usr/local/nginx/conf.d/conf.games/
+    code_dir: /data/web/games/
+    git_repo: https://github.com/thuan06/Memcached.git
+  remote_user: root #thuandd
+  become: true
+  tasks:
+    - name: Creat nginx config for {{hostname}}
+      copy: src=newvhost dest={{nginx_dir}}{{hostname}}.conf owner=root group=root mode=0644
+
+    - name: Update nginx config for {{hostname}}
+      replace: dest={{nginx_dir}}{{hostname}}.conf regexp='newvhost' replace='{{hostname}}'
+
+#    - name: Reload nginx
+#      service: name=nginx pattern=/etc/init.d/nginx state=reloaded
+
+    - name: Creat folder for {{hostname}}
+      file: path={{code_dir}}{{ hostname }}/public_html/ state=directory owner={{dev_user}} group={{dev_user}} mode=0755
+
+    - name: Clone code
+      git: repo={{git_repo}} dest={{code_dir}}{{ hostname }}/public_html/
+ 
+    - name: Creat folder for dev
+      file: path=/home/{{dev_user}}/{{hostname}} state=directory owner={{dev_user}} group={{dev_user}} mode=0755
+
+    - name: Mount from code to dev folder
+      lineinfile: dest=/usr/local/sbin/mount_checker.sh regexp="^fi" insertafter="fi" line="fi\n\n#mount {{hostname}}\n/bin/mount | /bin/grep '{{hostname}}' 1>/dev/null 2>&1\nif [ $? -ne 0 ]; then#\n     TMP=$TMP\"{{hostname}} out :( \### remounting...\n\"\n/bin/mount -o bind {{code_dir}}{{hostname}}/public_html /home/{{dev_user}}/{{hostname}}\nfi"
